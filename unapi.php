@@ -39,7 +39,7 @@ add_action('admin_menu', 'unapi_admin_menu');
 
 add_filter('the_content', 'unapi_abbr');
 
-add_option('unapi_idPrefix', 'oai:domain.tld:blogname:', 'An arbitrary identifier prefix for objects to be published via unAPI');
+add_option('unapi_idPrefix', 'unleash.it:', 'An arbitrary identifier prefix for objects to be published via unAPI');
 
 function unapi_abbr($content) {
 	global $wp_query;
