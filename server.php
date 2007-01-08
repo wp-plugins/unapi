@@ -25,7 +25,9 @@ require_once ('../../../wp-config.php');
 $id = ( isset($_GET['id']) ) ? urldecode($_GET['id']) : null;
 $format = ( isset($_GET['format']) ) ? urldecode($_GET['format']) : null;
 
-$idPrefix = get_option('unapi_idPrefix');
+$idPrefix = ( 'on' == get_option('unapi_usePermalink') ) ? 
+	get_bloginfo('wpurl') . "/?p=" :
+	get_option('unapi_idPrefix');
 
 $formatsList = array(
 	'oai_dc',
@@ -42,7 +44,7 @@ if ( $format )
 
 // validate id 
 if ( $id ) {
-	if ( strpos($id, $idPrefix) === 0 )
+	if ( strpos($id, $idPrefix) === 0 ) 
 		$id = substr($id, strlen($idPrefix)); 		// strip off prefix, leaving id of posting
 	else
 		unapi_error(404); 		// bad identifier (doesn't start with prefix)
@@ -125,7 +127,7 @@ function unapi_type3url() {
 
 	( 'rss' == $format ) ?
 		unapi_show_rss($post, $author, $blogName, $blogUrl, $blogDescription) :
-		eval('unapi_show_' . $format . '(\$post, \$author, \$blogName);');
+		eval('unapi_show_' . $format . '($post, $author, $blogName);');
 } // type3url()
 
 /*
