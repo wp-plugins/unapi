@@ -9,7 +9,7 @@ The server provides records for each WordPress post in the following formats: OA
 
 == Downloading ==
 
-1. Grab the zip file from http://www.lackoftalent.org/michael/blog/unapi-wordpress-plug-in/
+1. Grab the zip file from http://downloads.wordpress.org/plugin/unapi.zip
 2. Check out from svn: svn co http://svn.wp-plugins.org/unapi/trunk
 
 == Installation ==
