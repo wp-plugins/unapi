@@ -4,14 +4,16 @@
 Plugin Name: unAPI Server
 Plugin URI: http://www.lackoftalent.org/michael/blog/unapi-wordpress-plug-in/
 Description: Implements unAPI 1.0 specification, providing machine-readable metadata records for posts and pages.  Hat tip: <a href="http://www.wallandbinkley.com/quaedam/" target="_blank">Peter Binkley</a> for writing the first unAPI plug-in, on which subsequent versions have been heavily based.
-Version: 1.0
+Version: 1.2
 Author: Michael J. Giarlo
 Author URI: http://purl.org/net/leftwing/blog
 Contributor: Peter Binkley
 Contributor URI: http://www.wallandbinkley.com/quaedam/
+Contributor: Jonathan Brinley
+Contributor URI: http://xplus3.net/
 
 unAPI Server for Wordpress
-Copyright (C) 2006  Peter Binkley & Michael J. Giarlo (leftwing@alumni.rutgers.edu)
+Copyright (C) 2006  Peter Binkley and Michael J. Giarlo (leftwing@alumni.rutgers.edu)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -33,6 +35,7 @@ Version: 0.2, 2006-05-18 [Michael J. Giarlo]
 Version: 0.3, 2006-06-28 "
 Version: 1.0, 2007-01-01 "
 Version: 1.1, 2007-01-07 "
+Version: 1.2, 2007-12-19 [Jonathan Brinley]
 */
 
 add_action('wp_head', 'unapi_link');
