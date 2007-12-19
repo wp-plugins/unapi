@@ -1,6 +1,7 @@
 === unAPI Server ===
 Tags: unapi, metadata, record surrogates, machine-readable records
 Contributors: mjgiarlo, pibnkley
+Stable tag: trunk
 
 The unAPI Server is a WordPress plug-in implementing the final version of the unAPI specification, “a tiny HTTP API for the few basic operations necessary to copy discrete, identified content from any kind of web application.” Read the final version of the unAPI spec at http://unapi.info/. 
 
@@ -8,7 +9,7 @@ The server provides records for each WordPress post in the following formats: OA
 
 == Downloading ==
 
-1. Grab the zip file from http://www.lackoftalent.org/michael/blog/unapi-wordpress-plug-in/
+1. Grab the zip file from http://downloads.wordpress.org/plugin/unapi.zip
 2. Check out from svn: svn co http://svn.wp-plugins.org/unapi/trunk
 
 == Installation ==

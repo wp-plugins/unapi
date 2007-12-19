@@ -2,7 +2,7 @@
 
 /*
 unAPI Server for Wordpress
-Copyright (C) 2006  Peter Binkley & Michael J. Giarlo (leftwing@alumni.rutgers.edu)
+Copyright (C) 2006  Peter Binkley and Michael J. Giarlo (leftwing@alumni.rutgers.edu)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -114,9 +114,10 @@ function unapi_type3url() {
 	global $xmlHeader, $formats, $id, $format, $post;
 	$contentType = ( 'rss' == $format ) ? 'application/rss+xml' : 'application/xml';
 	header('Content-type: ' . $contentType . '; charset=' . get_settings('blog_charset'), true);
-
+	
 	// fetch author info
-	$author = get_userdata($post->post_author);
+	//pre-1.2: $author = get_userdata($post->post_author); // -jbrinley
+	$author = get_the_author();
 
 	// get blog name, url, and description
 	$blogName = get_bloginfo('name');
@@ -159,7 +160,7 @@ function unapi_show_oai_dc($post, $author, $blogName) {
 		<dc:identifier><?php echo $post->guid; ?></dc:identifier>
 		<dc:title><?php echo htmlspecialchars($post->post_title); ?></dc:title>
 		<dc:type>text</dc:type>
-		<dc:creator><?php echo htmlspecialchars($author->last_name . ', ' . $author->first_name); ?></dc:creator>
+		<dc:creator><?php echo htmlspecialchars($author); ?></dc:creator>
 		<dc:publisher><?php echo htmlspecialchars($blogName); ?></dc:publisher>
 		<dc:date><?php echo $post->post_modified_gmt; ?></dc:date>
 		<dc:format>application/xml</dc:format>
@@ -171,7 +172,7 @@ function unapi_show_oai_dc($post, $author, $blogName) {
 <?php
 	}
 ?>
-		<dc:description>'<?php echo substr(strip_tags($post->post_content), 0, 500); ?>' [first 500 characters shown]</dc:description>
+		<dc:description>'<?php echo substr(strip_tags(get_the_excerpt()), 0, 500); ?>' [first 500 characters shown]</dc:description>
 	</oai_dc:dc>
 <?php
 }
@@ -197,7 +198,7 @@ function unapi_show_rss($post, $author, $blogName, $blogUrl, $blogDescription) {
          <link><?php echo $post->guid; ?></link>
 	 <comments><?php echo $post->guid . "#comments"; ?></comments>
 	 <pubDate><?php echo $post->post_modified_gmt; ?></pubDate>
-	 <dc:creator><?php echo htmlspecialchars($author->last_name . ', ' . $author->first_name); ?></dc:creator>
+	 <dc:creator><?php echo htmlspecialchars($author); ?></dc:creator>
 	<?php
 
 	foreach ( (array) get_the_category() as $cat ) {
@@ -205,7 +206,7 @@ function unapi_show_rss($post, $author, $blogName, $blogUrl, $blogDescription) {
 	}
 ?>
 	 <guid isPermaLink="true"><?php echo $post->guid; ?></guid>
-	 <description><![CDATA[<?php echo strip_tags($post->post_content); ?>]]></description>
+	 <description><![CDATA[<?php echo strip_tags(get_the_excerpt()); ?>]]></description>
 	 <wfw:commentRSS><?php echo $post->guid . "feed/"; ?></wfw:commentRSS>
        </item>
      </channel>
@@ -227,7 +228,7 @@ function unapi_show_mods($post, $author, $blogName) {
 		<title><?php echo htmlspecialchars($post->post_title) ?></title>
 	</titleInfo>
 	<name type="personal">
-		<namePart><?php echo htmlspecialchars($author->last_name . ', ' . $author->first_name); ?></namePart>
+		<namePart><?php echo htmlspecialchars($author); ?></namePart>
 	</name>
 	<originInfo>
 		<publisher><?php echo htmlspecialchars($blogName); ?></publisher>
@@ -247,7 +248,7 @@ function unapi_show_mods($post, $author, $blogName) {
 		<url><?php echo $post->guid; ?></url>
 	</location>
 	<abstract>'
-        <?php echo substr(strip_tags($post->post_content), 0, 500) ?>...' [first 500 characters shown]
+        <?php echo substr(strip_tags(get_the_excerpt()), 0, 500) ?>...' [first 500 characters shown]
 	</abstract>
         <subject authority="local">
         <?php
@@ -285,7 +286,7 @@ function unapi_show_marcxml($post, $author, $blogName) {
 	</marc:datafield>
 	<marc:datafield tag="520" ind1="" ind2="">
                 <marc:subfield code="a">'
-                     <?php echo substr(strip_tags($post->post_content), 0, 500) ?>...' [first 500 characters shown]
+                     <?php echo substr(strip_tags(get_the_excerpt()), 0, 500) ?>...' [first 500 characters shown]
                 </marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="650" ind1="1" ind2="">
@@ -299,7 +300,7 @@ function unapi_show_marcxml($post, $author, $blogName) {
 ?>
         </marc:datafield>
         <marc:datafield tag="700" ind1="1" ind2="">
-        	<marc:subfield code="a"><?php echo htmlspecialchars($author->last_name . ', ' . $author->first_name); ?></marc:subfield>
+        	<marc:subfield code="a"><?php echo htmlspecialchars($author); ?></marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="856" ind1="" ind2="">
 		<marc:subfield code="u"><?php echo $post->guid; ?></marc:subfield>
@@ -319,12 +320,12 @@ function unapi_show_srw_dc($post, $author, $blogName) {
 ?>
   <srw_dc:dc xmlns:srw_dc="info:srw/schema/1/dc-schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://purl.org/dc/elements/1.1/" xsi:schemaLocation="info:srw/schema/1/dc-schema http://www.loc.gov/standards/sru/dc-schema.xsd">
 	<title><?php echo htmlspecialchars($post->post_title) ?></title>
-        <creator><?php echo htmlspecialchars($author->last_name . ', ' . $author->first_name); ?></creator>
+        <creator><?php echo htmlspecialchars($author); ?></creator>
 	<type>text</type>
 	<format>application/xml</format>
 	<publisher><?php echo htmlspecialchars($blogName); ?></publisher>
 	<date><?php echo $post->post_modified_gmt; ?></date>
-        <description>'<?php echo substr(strip_tags($post->post_content), 0, 500) ?>...' [first 500 characters shown]</description>
+        <description>'<?php echo substr(strip_tags(get_the_excerpt()), 0, 500) ?>...' [first 500 characters shown]</description>
         <?php
 	foreach ( (array) get_the_category() as $cat ) {
 		echo '<subject>' . $cat->cat_name . "</subject>\n";
