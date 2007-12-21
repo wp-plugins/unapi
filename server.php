@@ -25,6 +25,9 @@ require_once ('../../../wp-config.php');
 $id = ( isset($_GET['id']) ) ? urldecode($_GET['id']) : null;
 $format = ( isset($_GET['format']) ) ? urldecode($_GET['format']) : null;
 
+// get blog name
+$blogName = get_bloginfo('name');
+
 $idPrefix = ( 'on' == get_option('unapi_usePermalink') ) ? 
 	get_bloginfo('wpurl') . "/?p=" :
 	get_option('unapi_idPrefix');
@@ -50,9 +53,8 @@ if ( $id ) {
 		unapi_error(404); 			// bad identifier (doesn't start with prefix)
 
 	// fetch post
-	$post = null;
-	$post = get_post($id, OBJECT); 			// see http://codex.wordpress.org/Function_Reference/get_post
-	if ( !$post )
+	$post = get_post($id);
+	if ( !is_object($post) )
 		 unapi_error(404);			// no such post  //echo $post;
 	else 
 		if ( $post->post_status != 'publish' )
@@ -115,20 +117,8 @@ function unapi_type3url() {
 	$contentType = ( 'rss' == $format ) ? 'application/rss+xml' : 'application/xml';
 	header('Content-type: ' . $contentType . '; charset=' . get_settings('blog_charset'), true);
 	
-	// fetch author info
-	//pre-1.2: $author = get_userdata($post->post_author); // -jbrinley
-	$author = get_the_author();
-
-	// get blog name, url, and description
-	$blogName = get_bloginfo('name');
-	$blogUrl = get_bloginfo('url');
-	$blogDescription = get_bloginfo('description');
-
 	echo $xmlHeader;
-
-	( 'rss' == $format ) ?
-		unapi_show_rss($post, $author, $blogName, $blogUrl, $blogDescription) :
-		eval('unapi_show_' . $format . '($post, $author, $blogName);');
+	eval('unapi_show_' . $format . '();');
 } // type3url()
 
 /*
@@ -154,15 +144,17 @@ function unapi_error($statusCode) {
  *
  *
  */
-function unapi_show_oai_dc($post, $author, $blogName) {
+function unapi_show_oai_dc() {
+	global $id, $blogName;
+	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
 ?>
 	<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
-		<dc:identifier><?php echo $post->guid; ?></dc:identifier>
-		<dc:title><?php echo htmlspecialchars($post->post_title); ?></dc:title>
+		<dc:identifier><?php the_permalink_rss(); ?></dc:identifier>
+		<dc:title><?php the_title_rss(); ?></dc:title>
 		<dc:type>text</dc:type>
-		<dc:creator><?php echo htmlspecialchars($author); ?></dc:creator>
+		<dc:creator><?php the_author(); ?></dc:creator>
 		<dc:publisher><?php echo htmlspecialchars($blogName); ?></dc:publisher>
-		<dc:date><?php echo $post->post_modified_gmt; ?></dc:date>
+		<dc:date><?php the_modified_date('c'); ?></dc:date>
 		<dc:format>application/xml</dc:format>
 		<dc:language><?php echo get_option('rss_language'); ?></dc:language>
 <?php
@@ -172,47 +164,48 @@ function unapi_show_oai_dc($post, $author, $blogName) {
 <?php
 	}
 ?>
-		<dc:description>'<?php echo substr(strip_tags(get_the_excerpt()), 0, 500); ?>' [first 500 characters shown]</dc:description>
+		<dc:description>'<?php the_excerpt_rss();?>'</dc:description>
 	</oai_dc:dc>
-<?php
+<?php 
+	endforeach;
 }
 
 /*
  * output an RSS record from a post
  *
- * TO-DO: use WP built-in RSS functions.  this is kludgy.
  *
  */
-function unapi_show_rss($post, $author, $blogName, $blogUrl, $blogDescription) {
-	// consider getting at data via wp rss functions
+function unapi_show_rss() {
+	global $id, $blogName;
+	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
 ?>
   <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
       <title><?php echo htmlspecialchars($blogName); ?></title>
-      <link><?php echo $blogUrl; ?></link>
-      <description><?php echo $blogDescription; ?></description>
-      <pubDate><?php echo date("r"); ?></pubDate>
+      <link><?php echo get_bloginfo('url'); ?></link>
+      <description><?php echo htmlspecialchars(get_bloginfo('description')); ?></description>
+      <pubDate><?php the_modified_date("c"); ?></pubDate>
       <language><?php echo get_option('rss_language'); ?></language>
       <item>
-	 <title><?php echo htmlspecialchars($post->post_title); ?></title>
-         <link><?php echo $post->guid; ?></link>
-	 <comments><?php echo $post->guid . "#comments"; ?></comments>
-	 <pubDate><?php echo $post->post_modified_gmt; ?></pubDate>
-	 <dc:creator><?php echo htmlspecialchars($author); ?></dc:creator>
+	 <title><?php the_title_rss(); ?></title>
+         <link><?php the_permalink_rss(); ?></link>
+	 <comments><?php echo get_permalink() . "#comments"; ?></comments>
+	 <pubDate><?php the_modified_date('c'); ?></pubDate>
+	 <dc:creator><?php the_author(); ?></dc:creator>
 	<?php
 
 	foreach ( (array) get_the_category() as $cat ) {
 		echo "\t\t<category>" . $cat->cat_name . "</category>\n";
 	}
 ?>
-	 <guid isPermaLink="true"><?php echo $post->guid; ?></guid>
-	 <description><![CDATA[<?php echo strip_tags(get_the_excerpt()); ?>]]></description>
-	 <wfw:commentRSS><?php echo $post->guid . "feed/"; ?></wfw:commentRSS>
+	 <guid isPermaLink="true"><?php the_permalink_rss(); ?></guid>
+	 <description><![CDATA['<?php the_excerpt_rss();?>']]></description>
+	 <wfw:commentRSS><?php echo get_permalink() . "feed/"; ?></wfw:commentRSS>
        </item>
      </channel>
    </rss>
 <?php
-
+	endforeach;
 }
 
 /*
@@ -221,18 +214,20 @@ function unapi_show_rss($post, $author, $blogName, $blogUrl, $blogDescription) {
  *
  *
  */
-function unapi_show_mods($post, $author, $blogName) {
+function unapi_show_mods() {
+	global $id, $blogName;
+	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
 ?>
   <mods xmlns:xlink="http://www.w3.org/1999/xlink" version="3.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.loc.gov/mods/v3" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-0.xsd">
 	<titleInfo>
-		<title><?php echo htmlspecialchars($post->post_title) ?></title>
+		<title><?php the_title_rss(); ?></title>
 	</titleInfo>
 	<name type="personal">
-		<namePart><?php echo htmlspecialchars($author); ?></namePart>
+		<namePart><?php the_author(); ?></namePart>
 	</name>
 	<originInfo>
 		<publisher><?php echo htmlspecialchars($blogName); ?></publisher>
-		<dateIssued><?php echo $post->post_modified_gmt; ?></dateIssued>
+		<dateIssued><?php the_modified_date('c'); ?></dateIssued>
 	</originInfo>
 	<language>
 		<languageTerm authority="rfc3066" type="code"><?php echo get_option('rss_language'); ?></languageTerm>
@@ -245,11 +240,9 @@ function unapi_show_mods($post, $author, $blogName) {
 	</physicalDescription>
         <typeOfResource>text</typeOfResource>
 	<location>
-		<url><?php echo $post->guid; ?></url>
+		<url><?php the_permalink_rss(); ?></url>
 	</location>
-	<abstract>'
-        <?php echo substr(strip_tags(get_the_excerpt()), 0, 500) ?>...' [first 500 characters shown]
-	</abstract>
+	<abstract>'<?php the_excerpt_rss(); ?>'</abstract>
         <subject authority="local">
         <?php
 	foreach ( (array) get_the_category() as $cat ) {
@@ -259,7 +252,7 @@ function unapi_show_mods($post, $author, $blogName) {
         </subject>
   </mods>
 <?php
-
+	endforeach;
 }
 
 /*
@@ -268,7 +261,9 @@ function unapi_show_mods($post, $author, $blogName) {
  *
  *
  */
-function unapi_show_marcxml($post, $author, $blogName) {
+function unapi_show_marcxml() {
+	global $id, $blogName;
+	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
 ?>
   <marc:record xmlns:marc="http://www.loc.gov/MARC21/slim">
 	<marc:leader>nm 22 uu 4500</marc:leader>
@@ -278,16 +273,14 @@ function unapi_show_marcxml($post, $author, $blogName) {
 	        <marc:subfield code="2">rfc3066</marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="245" ind1="1" ind2="0">
-        	<marc:subfield code="a"><?php echo htmlspecialchars($post->post_title) ?></marc:subfield>
+        	<marc:subfield code="a"><?php the_title_rss(); ?></marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="260" ind1="" ind2="">
 		<marc:subfield code="b"><?php echo htmlspecialchars($blogName); ?></marc:subfield>
-		<marc:subfield code="c"><?php echo $post->post_modified_gmt; ?></marc:subfield>
+		<marc:subfield code="c"><?php the_modified_date('c'); ?></marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="520" ind1="" ind2="">
-                <marc:subfield code="a">'
-                     <?php echo substr(strip_tags(get_the_excerpt()), 0, 500) ?>...' [first 500 characters shown]
-                </marc:subfield>
+                <marc:subfield code="a">'<?php the_excerpt_rss(); ?>'</marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="650" ind1="1" ind2="">
         <?php
@@ -300,14 +293,14 @@ function unapi_show_marcxml($post, $author, $blogName) {
 ?>
         </marc:datafield>
         <marc:datafield tag="700" ind1="1" ind2="">
-        	<marc:subfield code="a"><?php echo htmlspecialchars($author); ?></marc:subfield>
+        	<marc:subfield code="a"><?php the_author(); ?></marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="856" ind1="" ind2="">
-		<marc:subfield code="u"><?php echo $post->guid; ?></marc:subfield>
+		<marc:subfield code="u"><?php the_permalink_rss(); ?></marc:subfield>
 	</marc:datafield>
   </marc:record>
 <?php
-
+	endforeach;
 }
 
 /*
@@ -316,25 +309,27 @@ function unapi_show_marcxml($post, $author, $blogName) {
  *
  *
  */
-function unapi_show_srw_dc($post, $author, $blogName) {
+function unapi_show_srw_dc() {
+	global $id, $blogName;
+	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
 ?>
   <srw_dc:dc xmlns:srw_dc="info:srw/schema/1/dc-schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://purl.org/dc/elements/1.1/" xsi:schemaLocation="info:srw/schema/1/dc-schema http://www.loc.gov/standards/sru/dc-schema.xsd">
-	<title><?php echo htmlspecialchars($post->post_title) ?></title>
-        <creator><?php echo htmlspecialchars($author); ?></creator>
+	<title><?php the_title_rss(); ?></title>
+        <creator><?php the_author(); ?></creator>
 	<type>text</type>
 	<format>application/xml</format>
 	<publisher><?php echo htmlspecialchars($blogName); ?></publisher>
-	<date><?php echo $post->post_modified_gmt; ?></date>
-        <description>'<?php echo substr(strip_tags(get_the_excerpt()), 0, 500) ?>...' [first 500 characters shown]</description>
+	<date><?php the_modified_date('c'); ?></date>
+        <description>'<?php the_excerpt_rss(); ?>'</description>
         <?php
 	foreach ( (array) get_the_category() as $cat ) {
 		echo '<subject>' . $cat->cat_name . "</subject>\n";
 	}
 ?>
-	<identifier><?php echo $post->guid; ?></identifier>
+	<identifier><?php the_permalink_rss(); ?></identifier>
 	<language><?php echo get_option('rss_language'); ?></language>
   </srw_dc:dc>
 <?php
-
+	endforeach;
 }
 ?>
