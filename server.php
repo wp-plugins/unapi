@@ -154,7 +154,7 @@ function unapi_show_oai_dc() {
 		<dc:type>text</dc:type>
 		<dc:creator><?php the_author(); ?></dc:creator>
 		<dc:publisher><?php echo htmlspecialchars($blogName); ?></dc:publisher>
-		<dc:date><?php the_modified_date('c'); ?></dc:date>
+		<dc:date><?php the_modified_date('r'); ?></dc:date>
 		<dc:format>application/xml</dc:format>
 		<dc:language><?php echo get_option('rss_language'); ?></dc:language>
 <?php
@@ -184,13 +184,13 @@ function unapi_show_rss() {
       <title><?php echo htmlspecialchars($blogName); ?></title>
       <link><?php echo get_bloginfo('url'); ?></link>
       <description><?php echo htmlspecialchars(get_bloginfo('description')); ?></description>
-      <pubDate><?php the_modified_date("c"); ?></pubDate>
+      <pubDate><?php the_modified_date('r'); ?></pubDate>
       <language><?php echo get_option('rss_language'); ?></language>
       <item>
 	 <title><?php the_title_rss(); ?></title>
          <link><?php the_permalink_rss(); ?></link>
 	 <comments><?php echo get_permalink() . "#comments"; ?></comments>
-	 <pubDate><?php the_modified_date('c'); ?></pubDate>
+	 <pubDate><?php the_modified_date('r'); ?></pubDate>
 	 <dc:creator><?php the_author(); ?></dc:creator>
 	<?php
 
@@ -227,7 +227,7 @@ function unapi_show_mods() {
 	</name>
 	<originInfo>
 		<publisher><?php echo htmlspecialchars($blogName); ?></publisher>
-		<dateIssued><?php the_modified_date('c'); ?></dateIssued>
+		<dateIssued><?php the_modified_date('r'); ?></dateIssued>
 	</originInfo>
 	<language>
 		<languageTerm authority="rfc3066" type="code"><?php echo get_option('rss_language'); ?></languageTerm>
@@ -277,7 +277,7 @@ function unapi_show_marcxml() {
 	</marc:datafield>
 	<marc:datafield tag="260" ind1="" ind2="">
 		<marc:subfield code="b"><?php echo htmlspecialchars($blogName); ?></marc:subfield>
-		<marc:subfield code="c"><?php the_modified_date('c'); ?></marc:subfield>
+		<marc:subfield code="c"><?php the_modified_date('r'); ?></marc:subfield>
 	</marc:datafield>
 	<marc:datafield tag="520" ind1="" ind2="">
                 <marc:subfield code="a">'<?php the_excerpt_rss(); ?>'</marc:subfield>
@@ -319,7 +319,7 @@ function unapi_show_srw_dc() {
 	<type>text</type>
 	<format>application/xml</format>
 	<publisher><?php echo htmlspecialchars($blogName); ?></publisher>
-	<date><?php the_modified_date('c'); ?></date>
+	<date><?php the_modified_date('r'); ?></date>
         <description>'<?php the_excerpt_rss(); ?>'</description>
         <?php
 	foreach ( (array) get_the_category() as $cat ) {
