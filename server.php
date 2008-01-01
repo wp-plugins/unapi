@@ -28,7 +28,13 @@ $format = ( isset($_GET['format']) ) ? urldecode($_GET['format']) : null;
 // get blog name
 $blogName = get_bloginfo('name');
 
-$usesPermalink = $wp_rewrite->using_permalinks() && ( 'on' == get_option('unapi_usePermalink') );
+if ( $wp_rewrite->using_permalinks() && ( 'on' == get_option('unapi_usePermalink') ) ) {
+	$usesPermalink = true;
+	$idPrefix = "";
+} else {
+	$usesPermalink = false;
+	$idPrefix = get_option('unapi_idPrefix');
+}
 
 $formatsList = array(
 	'oai_dc',
@@ -46,20 +52,20 @@ if ( $format )
 // validate id 
 if ( $id ) {
 	if ( $usesPermalink ) {
-		$id = $wpdb->get_var("SELECT ID FROM wp_posts WHERE guid='" . mysql_escape_string($id)  . "';");
-		if ( !is_numeric($id) )
+		$postId = $wpdb->get_var("SELECT ID FROM wp_posts WHERE guid='" . mysql_escape_string($id)  . "';");
+		if ( !is_numeric($postId) )
 			unapi_error(404);			// bad identifier
 	} else {
 		if ( strpos($id, $idPrefix) === 0 )
-			$id = substr($id, strlen($idPrefix)); 	// strip off prefix, leaving id of posting
+			$postId = substr($id, strlen($idPrefix)); 	// strip off prefix, leaving id of posting
 		else
 			unapi_error(404); 			// bad identifier (doesn't start with prefix)
 	}
 
 	// fetch post
-	$post = get_post($id);
+	$post = get_post($postId);
 	if ( !is_object($post) )
-		 unapi_error(404);			// no such post  //echo $post;
+		 unapi_error(404);			// no such post
 	else 
 		if ( $post->post_status != 'publish' )
 			unapi_error(404);		// post exists but hasn't been published, so treat as non-existent
@@ -100,11 +106,11 @@ function unapi_type1url() {
  *
  */
 function unapi_type2url() {
-	global $xmlHeader, $formats, $id, $idPrefix;
+	global $xmlHeader, $formats, $id;
 	header('Content-type: application/xml; charset=' . get_settings('blog_charset'), true);
 	header('HTTP/1.0 300 Multiple Choices');
 	echo $xmlHeader .
-		'<formats id="'. $idPrefix . $id . '">' . "\n" .
+		'<formats id="'. $id . '">' . "\n" .
 		$formats .
 		'</formats>';
 } // type2url()
@@ -149,8 +155,8 @@ function unapi_error($statusCode) {
  *
  */
 function unapi_show_oai_dc() {
-	global $id, $blogName;
-	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
+	global $postId, $blogName;
+	foreach(array_merge(get_posts('include=' . $postId), get_pages('include=' . $postId)) as $post) : setup_postdata($post);
 ?>
 	<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
 		<dc:identifier><?php the_permalink_rss(); ?></dc:identifier>
@@ -162,9 +168,10 @@ function unapi_show_oai_dc() {
 		<dc:format>application/xml</dc:format>
 		<dc:language><?php echo get_option('rss_language'); ?></dc:language>
 <?php
-	foreach ( (array) get_the_category() as $cat ) {
+	foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
+		if ( $cat->name == "" ) continue;
 ?>
-		<dc:subject scheme="local"><?php echo $cat->cat_name; ?></dc:subject>
+		<dc:subject scheme="local"><?php echo $cat->name; ?></dc:subject>
 <?php
 	}
 ?>
@@ -180,8 +187,8 @@ function unapi_show_oai_dc() {
  *
  */
 function unapi_show_rss() {
-	global $id, $blogName;
-	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
+	global $postId, $blogName;
+	foreach(array_merge(get_posts('include=' . $postId), get_pages('include=' . $postId)) as $post) : setup_postdata($post);
 ?>
   <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
@@ -197,9 +204,9 @@ function unapi_show_rss() {
 	 <pubDate><?php the_modified_date('r'); ?></pubDate>
 	 <dc:creator><?php the_author(); ?></dc:creator>
 	<?php
-
-	foreach ( (array) get_the_category() as $cat ) {
-		echo "\t\t<category>" . $cat->cat_name . "</category>\n";
+	foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
+		if ( $cat->name == "" ) continue;
+		echo "\t\t<category>" . $cat->name . "</category>\n";
 	}
 ?>
 	 <guid isPermaLink="true"><?php the_permalink_rss(); ?></guid>
@@ -219,8 +226,8 @@ function unapi_show_rss() {
  *
  */
 function unapi_show_mods() {
-	global $id, $blogName;
-	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
+	global $postId, $blogName;
+	foreach(array_merge(get_posts('include=' . $postId), get_pages('include=' . $postId)) as $post) : setup_postdata($post);
 ?>
   <mods xmlns:xlink="http://www.w3.org/1999/xlink" version="3.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.loc.gov/mods/v3" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-0.xsd">
 	<titleInfo>
@@ -249,8 +256,9 @@ function unapi_show_mods() {
 	<abstract>'<?php the_excerpt_rss(); ?>'</abstract>
         <subject authority="local">
         <?php
-	foreach ( (array) get_the_category() as $cat ) {
-		echo '                 <topic>' . $cat->cat_name . "</topic>\n";
+	foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
+		if ( $cat->name == "" ) continue;
+		echo '                 <topic>' . $cat->name . "</topic>\n";
 	}
 ?>
         </subject>
@@ -266,8 +274,8 @@ function unapi_show_mods() {
  *
  */
 function unapi_show_marcxml() {
-	global $id, $blogName;
-	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
+	global $postId, $blogName;
+	foreach(array_merge(get_posts('include=' . $postId), get_pages('include=' . $postId)) as $post) : setup_postdata($post);
 ?>
   <marc:record xmlns:marc="http://www.loc.gov/MARC21/slim">
 	<marc:leader>nm 22 uu 4500</marc:leader>
@@ -289,9 +297,10 @@ function unapi_show_marcxml() {
 	<marc:datafield tag="650" ind1="1" ind2="">
         <?php
 	$i = 0;
-	foreach ( (array) get_the_category() as $cat ) {
+	foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
+		if ( $cat->name == "" ) continue;
 		$j = ( 0 == $i ) ? "a" : "x";
-		echo '<marc:subfield code="' . $j . '">' . $cat->cat_name . "</marc:subfield>\n";
+		echo '<marc:subfield code="' . $j . '">' . $cat->name . "</marc:subfield>\n";
 		$i++;
 	}
 ?>
@@ -314,8 +323,8 @@ function unapi_show_marcxml() {
  *
  */
 function unapi_show_srw_dc() {
-	global $id, $blogName;
-	foreach(array_merge(get_posts('include=' . $id), get_pages('include=' . $id)) as $post) : setup_postdata($post);
+	global $postId, $blogName;
+	foreach(array_merge(get_posts('include=' . $postId), get_pages('include=' . $postId)) as $post) : setup_postdata($post);
 ?>
   <srw_dc:dc xmlns:srw_dc="info:srw/schema/1/dc-schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://purl.org/dc/elements/1.1/" xsi:schemaLocation="info:srw/schema/1/dc-schema http://www.loc.gov/standards/sru/dc-schema.xsd">
 	<title><?php the_title_rss(); ?></title>
@@ -326,8 +335,9 @@ function unapi_show_srw_dc() {
 	<date><?php the_modified_date('r'); ?></date>
         <description>'<?php the_excerpt_rss(); ?>'</description>
         <?php
-	foreach ( (array) get_the_category() as $cat ) {
-		echo '<subject>' . $cat->cat_name . "</subject>\n";
+	foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
+		if ( $cat->name == "" ) continue;
+		echo '<subject>' . $cat->name . "</subject>\n";
 	}
 ?>
 	<identifier><?php the_permalink_rss(); ?></identifier>
