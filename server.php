@@ -28,9 +28,7 @@ $format = ( isset($_GET['format']) ) ? urldecode($_GET['format']) : null;
 // get blog name
 $blogName = get_bloginfo('name');
 
-$idPrefix = ( 'on' == get_option('unapi_usePermalink') ) ? 
-	get_bloginfo('wpurl') . "/?p=" :
-	get_option('unapi_idPrefix');
+$usesPermalink = $wp_rewrite->using_permalinks() && ( 'on' == get_option('unapi_usePermalink') );
 
 $formatsList = array(
 	'oai_dc',
@@ -47,10 +45,16 @@ if ( $format )
 
 // validate id 
 if ( $id ) {
-	if ( strpos($id, $idPrefix) === 0 ) 
-		$id = substr($id, strlen($idPrefix)); 	// strip off prefix, leaving id of posting
-	else
-		unapi_error(404); 			// bad identifier (doesn't start with prefix)
+	if ( $usesPermalink ) {
+		$id = $wpdb->get_var("SELECT ID FROM wp_posts WHERE guid='" . mysql_escape_string($id)  . "';");
+		if ( !is_numeric($id) )
+			unapi_error(404);			// bad identifier
+	} else {
+		if ( strpos($id, $idPrefix) === 0 )
+			$id = substr($id, strlen($idPrefix)); 	// strip off prefix, leaving id of posting
+		else
+			unapi_error(404); 			// bad identifier (doesn't start with prefix)
+	}
 
 	// fetch post
 	$post = get_post($id);
