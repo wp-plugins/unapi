@@ -1,6 +1,6 @@
 === unAPI Server ===
 Tags: unapi, metadata, record surrogates, machine-readable records
-Contributors: mjgiarlo, pbinkley, jbrinley
+Contributors: mjgiarlo, pbinkley, jbrinley, lbjay
 Stable tag: trunk
 
 The unAPI Server is a WordPress plug-in implementing the final version of the unAPI specification, “a tiny HTTP API for the few basic operations necessary to copy discrete, identified content from any kind of web application.” Read the final version of the unAPI spec at http://unapi.info/. 
@@ -44,4 +44,4 @@ An unAPI identifier is typically composed of a prefix and an integer, but may be
 
 = Something is broked! =
 
-Go tell it on the mountain.  Oh, okay, why don't you send me an e-mail?  Try leftwing@alumni.rutgers.edu.  (No, that's not my mother-in-law's address.)
+Oh, okay, why don't you send me an e-mail?  Try leftwing at alumni rutgers edu.  Patches welcome.
