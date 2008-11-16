@@ -4,13 +4,15 @@
 Plugin Name: unAPI Server
 Plugin URI: http://www.lackoftalent.org/michael/blog/unapi-wordpress-plug-in/
 Description: Implements unAPI 1.0 specification, providing machine-readable metadata records for posts and pages.  Hat tip: <a href="http://www.wallandbinkley.com/quaedam/" target="_blank">Peter Binkley</a> for writing the first unAPI plug-in, on which subsequent versions have been heavily based.
-Version: 1.5
+Version: 1.4.1
 Author: Michael J. Giarlo
 Author URI: http://purl.org/net/leftwing/blog
 Contributor: Peter Binkley
 Contributor URI: http://www.wallandbinkley.com/quaedam/
 Contributor: Jonathan Brinley
 Contributor URI: http://xplus3.net/
+Contributor: Jay Luker
+Contributor URI: http://www.linkedin.com/in/jayluker
 
 unAPI Server for Wordpress
 Copyright (C) 2006  Peter Binkley and Michael J. Giarlo (leftwing@alumni.rutgers.edu)
@@ -39,7 +41,7 @@ Version: 1.2, 2007-12-19 [Jonathan Brinley]
 Version: 1.3, 2007-12-21 [Michael J. Giarlo]
 Version: 1.3.1, 2007-12-30 "
 Version: 1.4, 2007-12-31 "
-Version: 1.5, 2008-01-01 "
+Version: 1.4.1, 2008-11-16 [Michael J. Giarlo, Jay Luker]
 */
 
 add_action('wp_head', 'unapi_link');
@@ -53,7 +55,7 @@ add_option('unapi_usePermalink', 'on', 'Set to on to use WP permalinks as unAPI 
 
 function unapi_abbr($content) {
 	global $wp_query, $wpdb;
-    $table_name = $wpdb->prefix . 'posts';
+        $table_name = $wpdb->prefix . 'posts';
 	$idPrefix = (get_option('unapi_usePermalink') == 'on') ? 
 		$wpdb->get_var("SELECT guid FROM $table_name WHERE ID='" . $wp_query->post->ID . "';") :
 		get_option('unapi_idPrefix') . $wp_query->post->ID;

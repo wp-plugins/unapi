@@ -1,0 +1,208 @@
+Index: server.php
+===================================================================
+--- server.php  (revision 35603)
++++ server.php  (working copy)
+@@ -85,7 +85,6 @@
+ else
+       ( $id ) ? unapi_type2url() : unapi_type1url();
+
+-
+ /*
+ * type1url (no identifier, no format): return list of formats
+ *
+@@ -161,21 +160,28 @@
+       <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+               <dc:identifier><?php the_permalink_rss(); ?></dc:identifier>
+               <dc:title><?php the_title_rss(); ?></dc:title>
+-               <dc:type>text</dc:type>
+-               <dc:creator><?php the_author(); ?></dc:creator>
++               <dc:type>interview</dc:type>
++<?php
++       foreach ( wp_get_object_terms($postId, 'auth') as $cat ) {
++               if ( $cat->name == "" ) continue;
++?>
++               <dc:creator><?php echo $cat->name; ?></dc:creator>
++<?php
++       }
++?>
+               <dc:publisher><?php echo htmlspecialchars($blogName); ?></dc:publisher>
+-               <dc:date><?php the_modified_date('r'); ?></dc:date>
++               <dc:date><?php the_date('r'); ?></dc:date>
+               <dc:format>application/xml</dc:format>
+               <dc:language><?php echo get_option('rss_language'); ?></dc:language>
+ <?php
+-       foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
++       foreach ( wp_get_object_terms($postId, 'subj') as $cat ) {
+               if ( $cat->name == "" ) continue;
+ ?>
+               <dc:subject scheme="local"><?php echo $cat->name; ?></dc:subject>
+ <?php
+       }
+ ?>
+-               <dc:description>'<?php the_excerpt_rss();?>'</dc:description>
++               <dc:description>'<?php echo the_excerpt_rss(); ?>'</dc:description>
+       </oai_dc:dc>
+ <?php
+       endforeach;
+@@ -195,17 +201,23 @@
+      <title><?php echo htmlspecialchars($blogName); ?></title>
+      <link><?php echo get_bloginfo('url'); ?></link>
+      <description><?php echo htmlspecialchars(get_bloginfo('description')); ?></description>
+-      <pubDate><?php the_modified_date('r'); ?></pubDate>
++      <pubDate><?php the_date('r'); ?></pubDate>
+      <language><?php echo get_option('rss_language'); ?></language>
+      <item>
+        <title><?php the_title_rss(); ?></title>
+         <link><?php the_permalink_rss(); ?></link>
+        <comments><?php echo get_permalink() . "#comments"; ?></comments>
+-        <pubDate><?php the_modified_date('r'); ?></pubDate>
+-        <dc:creator><?php the_author(); ?></dc:creator>
+-       <?php
+-       foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
++        <pubDate><?php the_date('r'); ?></pubDate>
++<?php
++       foreach ( wp_get_object_terms($postId, 'auth') as $cat ) {
+               if ( $cat->name == "" ) continue;
++?>
++               <dc:creator><?php echo $cat->name; ?></dc:creator>
++<?php
++       }
++
++       foreach ( wp_get_object_terms($postId, 'subj') as $cat ) {
++               if ( $cat->name == "" ) continue;
+               echo "\t\t<category>" . $cat->name . "</category>\n";
+       }
+ ?>
+@@ -233,35 +245,46 @@
+       <titleInfo>
+               <title><?php the_title_rss(); ?></title>
+       </titleInfo>
+-       <name type="personal">
+-               <namePart><?php the_author(); ?></namePart>
++<?php
++       foreach ( wp_get_object_terms($postId, 'auth') as $cat ) {
++               if ( $cat->name == "" ) continue;
++?>
++    <name type="personal">
++               <namePart><?php echo $cat->name; ?></namePart>
+       </name>
++<?php
++       }
++?>
+       <originInfo>
+               <publisher><?php echo htmlspecialchars($blogName); ?></publisher>
+-               <dateIssued><?php the_modified_date('r'); ?></dateIssued>
++               <dateIssued><?php the_date('r'); ?></dateIssued>
+       </originInfo>
+       <language>
+               <languageTerm authority="rfc3066" type="code"><?php echo get_option('rss_language'); ?></languageTerm>
+       </language>
+       <physicalDescription>
+       <form authority="marcform">electronic</form>
+-       <digitalOrigin>born digital</digitalOrigin>
++       <digitalOrigin>reformatted digital</digitalOrigin>
+       <reformattingQuality>access</reformattingQuality>
+       <internetMediaType>application/xml</internetMediaType>
+       </physicalDescription>
+        <typeOfResource>text</typeOfResource>
++        <genre authority="local">interview</genre>
+       <location>
+               <url><?php the_permalink_rss(); ?></url>
+       </location>
+       <abstract>'<?php the_excerpt_rss(); ?>'</abstract>
+-        <subject authority="local">
++
+        <?php
+-       foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
++       foreach ( wp_get_object_terms($postId, 'subj') as $cat ) {
+               if ( $cat->name == "" ) continue;
+-               echo '                 <topic>' . $cat->name . "</topic>\n";
+-       }
+-?>
++               ?>
++               <subject authority="local">
++                   <topic><? echo $cat->name; ?></topic>
+        </subject>
++    <?php
++    }
++    ?>
+  </mods>
+ <?php
+       endforeach;
+@@ -289,25 +312,31 @@
+       </marc:datafield>
+       <marc:datafield tag="260" ind1="" ind2="">
+               <marc:subfield code="b"><?php echo htmlspecialchars($blogName); ?></marc:subfield>
+-               <marc:subfield code="c"><?php the_modified_date('r'); ?></marc:subfield>
++               <marc:subfield code="c"><?php the_date('r'); ?></marc:subfield>
+       </marc:datafield>
+       <marc:datafield tag="520" ind1="" ind2="">
+                <marc:subfield code="a">'<?php the_excerpt_rss(); ?>'</marc:subfield>
+       </marc:datafield>
+-       <marc:datafield tag="650" ind1="1" ind2="">
+-        <?php
+-       $i = 0;
+-       foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
++<?php
++
++       foreach (  wp_get_object_terms($postId, 'subj') as $cat ) {
+               if ( $cat->name == "" ) continue;
+-               $j = ( 0 == $i ) ? "a" : "x";
+-               echo '<marc:subfield code="' . $j . '">' . $cat->name . "</marc:subfield>\n";
+-               $i++;
++               ?>
++               <marc:datafield tag="650" ind1="1" ind2="4">
++               <marc:subfield code="a"><? echo $cat->name; ?></marc:subfield>\n";
++               </marc:datafield>
++       <?php
+       }
++
++       foreach ( wp_get_object_terms($postId, 'auth') as $cat ) {
++               if ( $cat->name == "" ) continue;
+ ?>
+-        </marc:datafield>
+        <marc:datafield tag="700" ind1="1" ind2="">
+-               <marc:subfield code="a"><?php the_author(); ?></marc:subfield>
+-       </marc:datafield>
++               <marc:subfield code="a"><?php echo $cat->name; ?></marc:subfield>
++       </marc:datafield>
++<?php
++       }
++?>
+       <marc:datafield tag="856" ind1="" ind2="">
+               <marc:subfield code="u"><?php the_permalink_rss(); ?></marc:subfield>
+       </marc:datafield>
+@@ -328,14 +357,22 @@
+ ?>
+  <srw_dc:dc xmlns:srw_dc="info:srw/schema/1/dc-schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://purl.org/dc/elements/1.1/" xsi:schemaLocation="info:srw/schema/1/dc-schema http://www.loc.gov/standards/sru/dc-schema.xsd">
+       <title><?php the_title_rss(); ?></title>
+-        <creator><?php the_author(); ?></creator>
+-       <type>text</type>
++       <?php
++       foreach ( wp_get_object_terms($postId, 'auth') as $cat ) {
++               if ( $cat->name == "" ) continue;
++?>
++               <creator><?php echo $cat->name; ?></creator>
++       </name>
++<?php
++       }
++?>
++       <type>interview</type>
+       <format>application/xml</format>
+       <publisher><?php echo htmlspecialchars($blogName); ?></publisher>
+-       <date><?php the_modified_date('r'); ?></date>
++       <date><?php the_date('r'); ?></date>
+        <description>'<?php the_excerpt_rss(); ?>'</description>
+        <?php
+-       foreach ( array_merge((array) get_the_category(), (array) get_the_tags()) as $cat ) {
++       foreach ( wp_get_object_terms($postId, 'auth') as $cat ) {
+               if ( $cat->name == "" ) continue;
+               echo '<subject>' . $cat->name . "</subject>\n";
+       }
+@@ -346,4 +383,4 @@
+ <?php
+       endforeach;
+ }
+-?>
+\ No newline at end of file
++?>
