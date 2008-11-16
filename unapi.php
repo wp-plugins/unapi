@@ -53,8 +53,9 @@ add_option('unapi_usePermalink', 'on', 'Set to on to use WP permalinks as unAPI 
 
 function unapi_abbr($content) {
 	global $wp_query, $wpdb;
+    $table_name = $wpdb->prefix . 'posts';
 	$idPrefix = (get_option('unapi_usePermalink') == 'on') ? 
-		$wpdb->get_var("SELECT guid FROM wp_posts WHERE ID='" . $wp_query->post->ID . "';") :
+		$wpdb->get_var("SELECT guid FROM $table_name WHERE ID='" . $wp_query->post->ID . "';") :
 		get_option('unapi_idPrefix') . $wp_query->post->ID;
 	return '<abbr class="unapi-id" title="' . $idPrefix . '">' .
 		"<!-- &nbsp; --></abbr>\n" .
