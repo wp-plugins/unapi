@@ -52,7 +52,8 @@ if ( $format )
 // validate id 
 if ( $id ) {
 	if ( $usesPermalink ) {
-		$postId = $wpdb->get_var("SELECT ID FROM wp_posts WHERE guid='" . mysql_escape_string($id)  . "';");
+ 	        $table_name = $wpdb->prefix . 'posts';
+		$postId = $wpdb->get_var("SELECT ID FROM " . $table_name . " WHERE guid='" . mysql_escape_string($id)  . "';");
 		if ( !is_numeric($postId) )
 			unapi_error(404);			// bad identifier
 	} else {
